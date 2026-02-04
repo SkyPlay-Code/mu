@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clay Music Player</title>
+    <!-- Import rounded font for the soft aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --clay-color: #f0f4f8;
+            --accent-color: #eb6b6b; /* Soft Red/Pink */
+            --text-color: #6d7587;
+            
+            /* Claymorphism Shadows */
+            --shadow-out: 8px 8px 16px rgba(166, 171, 189, 0.5);
+            --shadow-in: -8px -8px 16px rgba(255, 255, 255, 0.8);
+            --inner-shadow: inset 6px 6px 10px rgba(166, 171, 189, 0.2), 
+                            inset -6px -6px 10px rgba(255, 255, 255, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Prevents text selection on touch */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- Main Player Container --- */
+        .player-container {
+            width: 90%;
+            max-width: 400px;
+            background-color: var(--clay-color);
+            border-radius: 40px;
+            padding: 40px 30px;
+            position: relative;
+            /* Floating Effect */
+            box-shadow: var(--shadow-out), var(--shadow-in);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        /* --- Song Info --- */
+        .song-info {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .song-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #4a5060;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .artist-name {
+            font-size: 1rem;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        /* --- Controls Wrapper --- */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        /* --- Clay Buttons --- */
+        .clay-btn {
+            border: none;
+            outline: none;
+            cursor: pointer;
+            background-color: var(--clay-color);
+            color: var(--text-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--shadow-out), var(--shadow-in);
+            transition: all 0.2s ease;
+        }
+
+        .clay-btn:active {
+            box-shadow: var(--inner-shadow);
+            transform: scale(0.95);
+        }
+
+        .btn-small {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+        }
+
+        .btn-large {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+            color: var(--accent-color);
+        }
+
+        /* Active Play State styles */
+        .clay-btn.playing {
+            box-shadow: var(--inner-shadow);
+            color: var(--accent-color);
+        }
+
+        /* --- Progress Bar & Volume --- */
+        .sliders-container {
+            width: 100%;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        /* Custom Range Slider Styling (Clay Style Trough) */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        /* The Track (Indented Clay) */
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 16px;
+            background: var(--clay-color);
+            border-radius: 10px;
+            box-shadow: var(--inner-shadow);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 16px;
+            background: var(--clay-color);
+            border-radius: 10px;
+            box-shadow: var(--inner-shadow);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* The Thumb (Popping Clay) */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            margin-top: -5px; /* Centers thumb */
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2), inset 2px 2px 5px rgba(255,255,255,0.4);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            height: 24px;
+            width: 24px;
+            border: none;
+            border-radius: 50%;
+            background: var(--accent-color);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2), inset 2px 2px 5px rgba(255,255,255,0.4);
+        }
+
+        input[type="range"]:active::-webkit-slider-thumb {
+            transform: scale(1.1);
+        }
+
+        /* Volume Section */
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .volume-icon {
+            color: var(--text-color);
+            width: 20px;
+        }
+
+        /* Song List Indicator */
+        .playlist-indicator {
+            margin-top: 20px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #d1d9e6;
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .dot.active {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 5px var(--accent-color);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="player-container">
+        
+        <!-- Song Details -->
+        <div class="song-info">
+            <div class="song-title" id="title">Loading...</div>
+            <div class="artist-name">Music Player</div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="sliders-container">
+            <div class="time-display">
+                <span id="curr-time">0:00</span>
+                <span id="dur-time">0:00</span>
+            </div>
+            <input type="range" id="progress" value="0" min="0" max="100" step="1">
+        </div>
+
+        <!-- Main Controls -->
+        <div class="controls">
+            <button class="clay-btn btn-small" id="prev">
+                <i class="fas fa-backward"></i>
+            </button>
+            
+            <button class="clay-btn btn-large" id="play">
+                <i class="fas fa-play" id="play-icon"></i>
+            </button>
+            
+            <button class="clay-btn btn-small" id="next">
+                <i class="fas fa-forward"></i>
+            </button>
+        </div>
+
+        <!-- Volume Control -->
+        <div class="volume-container sliders-container">
+            <i class="fas fa-volume-down volume-icon"></i>
+            <input type="range" id="volume" value="80" min="0" max="100">
+            <i class="fas fa-volume-up volume-icon"></i>
+        </div>
+
+        <!-- Playlist Dots -->
+        <div class="playlist-indicator" id="dots-container">
+            <!-- Dots generated by JS -->
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION ---
+        // Add your song file names here. 
+        // Ensure files are in the same folder or provide full URL.
+        const songs = [
+            {
+                name: "Relaxing Vibes", // Display Name
+                path: "song1.mp3"       // File Name
+            },
+            {
+                name: "Upbeat Rhythm",  // Display Name
+                path: "song2.mp3"       // File Name
+            }
+        ];
+
+        // --- 2. ELEMENTS ---
+        const audio = new Audio();
+        const titleEl = document.getElementById('title');
+        const playBtn = document.getElementById('play');
+        const playIcon = document.getElementById('play-icon');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const progressEl = document.getElementById('progress');
+        const volumeEl = document.getElementById('volume');
+        const currTimeEl = document.getElementById('curr-time');
+        const durTimeEl = document.getElementById('dur-time');
+        const dotsContainer = document.getElementById('dots-container');
+
+        // --- 3. STATE ---
+        let songIndex = 0;
+        let isPlaying = false;
+        let isDragging = false; // To prevent jitter while dragging slider
+
+        // --- 4. FUNCTIONS ---
+
+        // Initialize Player
+        function initPlayer() {
+            // Create dots for playlist
+            songs.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if (index === 0) dot.classList.add('active');
+                dotsContainer.appendChild(dot);
+            });
+
+            loadSong(songIndex);
+        }
+
+        // Load Song Details
+        function loadSong(index) {
+            titleEl.innerText = songs[index].name;
+            audio.src = songs[index].path;
+            audio.load();
+            
+            // Update dots
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach(d => d.classList.remove('active'));
+            if(dots[index]) dots[index].classList.add('active');
+        }
+
+        // Toggle Play/Pause
+        function togglePlay() {
+            if (isPlaying) {
+                pauseSong();
+            } else {
+                playSong();
+            }
+        }
+
+        function playSong() {
+            isPlaying = true;
+            playIcon.classList.remove('fa-play');
+            playIcon.classList.add('fa-pause');
+            playBtn.classList.add('playing'); // Push button in
+            audio.play().catch(e => console.log("Audio file not found or interaction required"));
+        }
+
+        function pauseSong() {
+            isPlaying = false;
+            playIcon.classList.remove('fa-pause');
+            playIcon.classList.add('fa-play');
+            playBtn.classList.remove('playing');
+            audio.pause();
+        }
+
+        // Next Song
+        function nextSong() {
+            songIndex++;
+            if (songIndex > songs.length - 1) {
+                songIndex = 0;
+            }
+            loadSong(songIndex);
+            if (isPlaying) playSong();
+        }
+
+        // Previous Song
+        function prevSong() {
+            songIndex--;
+            if (songIndex < 0) {
+                songIndex = songs.length - 1;
+            }
+            loadSong(songIndex);
+            if (isPlaying) playSong();
+        }
+
+        // Update Progress Bar UI
+        function updateProgress(e) {
+            if (isDragging) return; // Don't update if user is dragging
+
+            const { duration, currentTime } = e.srcElement;
+            if (isNaN(duration)) return;
+
+            const progressPercent = (currentTime / duration) * 100;
+            progressEl.value = progressPercent;
+
+            // Update Time Text
+            const curMins = Math.floor(currentTime / 60);
+            const curSecs = Math.floor(currentTime % 60);
+            
+            const durMins = Math.floor(duration / 60);
+            const durSecs = Math.floor(duration % 60);
+
+            currTimeEl.innerText = `${curMins}:${curSecs < 10 ? '0' : ''}${curSecs}`;
+            durTimeEl.innerText = `${durMins}:${durSecs < 10 ? '0' : ''}${durSecs}`;
+        }
+
+        // Set Progress (Seeking)
+        function setProgress(e) {
+            const width = this.value; // 0 to 100
+            const duration = audio.duration;
+            if(!isNaN(duration)) {
+                audio.currentTime = (width / 100) * duration;
+            }
+        }
+
+        // Set Volume
+        function setVolume(e) {
+            audio.volume = e.target.value / 100;
+        }
+
+        // --- 5. EVENT LISTENERS ---
+
+        playBtn.addEventListener('click', togglePlay);
+        nextBtn.addEventListener('click', nextSong);
+        prevBtn.addEventListener('click', prevSong);
+
+        // Audio Events
+        audio.addEventListener('timeupdate', updateProgress);
+        audio.addEventListener('ended', nextSong); // Auto play next
+        audio.addEventListener('loadedmetadata', () => {
+             // Set duration on load
+             if(audio.duration) {
+                const durMins = Math.floor(audio.duration / 60);
+                const durSecs = Math.floor(audio.duration % 60);
+                durTimeEl.innerText = `${durMins}:${durSecs < 10 ? '0' : ''}${durSecs}`;
+             }
+        });
+
+        // Progress Bar Interaction
+        progressEl.addEventListener('input', () => isDragging = true); // Start Drag
+        progressEl.addEventListener('change', (e) => { // End Drag (Drop)
+            isDragging = false;
+            setProgress.call(progressEl, e);
+        });
+
+        // Volume Interaction
+        volumeEl.addEventListener('input', setVolume);
+
+        // --- 6. START ---
+        initPlayer();
+
+    </script>
+</body>
+</html>
